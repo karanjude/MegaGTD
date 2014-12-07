@@ -7,11 +7,18 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreData/CoreData.h>
 
-@interface DetailViewController : UIViewController
+@interface DetailViewController : UITableViewController <UIActionSheetDelegate, NSFetchedResultsControllerDelegate>
 
 @property (strong, nonatomic) id detailItem;
-@property (weak, nonatomic) IBOutlet UILabel *detailDescriptionLabel;
+@property (strong, nonatomic) UIColor* foreColor;
+@property (strong, nonatomic) UIColor* backColor;
+
+@property (nonatomic, strong) NSManagedObjectContext *managedObjectContext;
+@property (strong, nonatomic) NSString* category;
+
+- (NSString*) titleForCategory: (NSString*) category;
 
 @end
 

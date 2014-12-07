@@ -7,14 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		85743D5E1A26F79D0011A60F /* InTaskViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 85743D5D1A26F79D0011A60F /* InTaskViewController.m */; };
+		857E28B11A3502EA00CA88FB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 857E28B01A3502EA00CA88FB /* Images.xcassets */; };
 		85D0313C1A210A7A005F5D43 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 85D0313B1A210A7A005F5D43 /* main.m */; };
 		85D0313F1A210A7A005F5D43 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 85D0313E1A210A7A005F5D43 /* AppDelegate.m */; };
 		85D031421A210A7A005F5D43 /* MasterViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 85D031411A210A7A005F5D43 /* MasterViewController.m */; };
 		85D031451A210A7A005F5D43 /* DetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 85D031441A210A7A005F5D43 /* DetailViewController.m */; };
 		85D031481A210A7A005F5D43 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85D031461A210A7A005F5D43 /* Main.storyboard */; };
-		85D0314A1A210A7A005F5D43 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85D031491A210A7A005F5D43 /* Images.xcassets */; };
 		85D0314D1A210A7A005F5D43 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 85D0314B1A210A7A005F5D43 /* LaunchScreen.xib */; };
 		85D031591A210A7A005F5D43 /* MegaGTDTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 85D031581A210A7A005F5D43 /* MegaGTDTests.m */; };
+		85FE05CD1A30B66800BFC79B /* Task.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 85FE05CB1A30B66800BFC79B /* Task.xcdatamodeld */; };
+		85FE05D01A30B79F00BFC79B /* Task.m in Sources */ = {isa = PBXBuildFile; fileRef = 85FE05CF1A30B79F00BFC79B /* Task.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,6 +31,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		85743D5C1A26F79D0011A60F /* InTaskViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InTaskViewController.h; sourceTree = "<group>"; };
+		85743D5D1A26F79D0011A60F /* InTaskViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InTaskViewController.m; sourceTree = "<group>"; };
+		857E28B01A3502EA00CA88FB /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		85D031361A210A79005F5D43 /* MegaGTD.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaGTD.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		85D0313A1A210A7A005F5D43 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		85D0313B1A210A7A005F5D43 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -38,11 +44,13 @@
 		85D031431A210A7A005F5D43 /* DetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DetailViewController.h; sourceTree = "<group>"; };
 		85D031441A210A7A005F5D43 /* DetailViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DetailViewController.m; sourceTree = "<group>"; };
 		85D031471A210A7A005F5D43 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		85D031491A210A7A005F5D43 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		85D0314C1A210A7A005F5D43 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		85D031521A210A7A005F5D43 /* MegaGTDTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MegaGTDTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		85D031571A210A7A005F5D43 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		85D031581A210A7A005F5D43 /* MegaGTDTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MegaGTDTests.m; sourceTree = "<group>"; };
+		85FE05CC1A30B66800BFC79B /* Task.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Task.xcdatamodel; sourceTree = "<group>"; };
+		85FE05CE1A30B79F00BFC79B /* Task.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Task.h; sourceTree = "<group>"; };
+		85FE05CF1A30B79F00BFC79B /* Task.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Task.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,11 +96,16 @@
 				85D0313E1A210A7A005F5D43 /* AppDelegate.m */,
 				85D031401A210A7A005F5D43 /* MasterViewController.h */,
 				85D031411A210A7A005F5D43 /* MasterViewController.m */,
+				85FE05CB1A30B66800BFC79B /* Task.xcdatamodeld */,
+				85FE05CE1A30B79F00BFC79B /* Task.h */,
+				85FE05CF1A30B79F00BFC79B /* Task.m */,
+				85743D5C1A26F79D0011A60F /* InTaskViewController.h */,
+				85743D5D1A26F79D0011A60F /* InTaskViewController.m */,
 				85D031431A210A7A005F5D43 /* DetailViewController.h */,
 				85D031441A210A7A005F5D43 /* DetailViewController.m */,
 				85D031461A210A7A005F5D43 /* Main.storyboard */,
-				85D031491A210A7A005F5D43 /* Images.xcassets */,
 				85D0314B1A210A7A005F5D43 /* LaunchScreen.xib */,
+				857E28B01A3502EA00CA88FB /* Images.xcassets */,
 				85D031391A210A7A005F5D43 /* Supporting Files */,
 			);
 			path = MegaGTD;
@@ -204,9 +217,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				857E28B11A3502EA00CA88FB /* Images.xcassets in Resources */,
 				85D031481A210A7A005F5D43 /* Main.storyboard in Resources */,
 				85D0314D1A210A7A005F5D43 /* LaunchScreen.xib in Resources */,
-				85D0314A1A210A7A005F5D43 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -224,6 +237,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85FE05D01A30B79F00BFC79B /* Task.m in Sources */,
+				85FE05CD1A30B66800BFC79B /* Task.xcdatamodeld in Sources */,
+				85743D5E1A26F79D0011A60F /* InTaskViewController.m in Sources */,
 				85D0313F1A210A7A005F5D43 /* AppDelegate.m in Sources */,
 				85D031421A210A7A005F5D43 /* MasterViewController.m in Sources */,
 				85D0313C1A210A7A005F5D43 /* main.m in Sources */,
@@ -352,8 +368,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = MegaGTD/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -362,8 +380,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = MegaGTD/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -420,6 +440,7 @@
 				85D0315E1A210A7A005F5D43 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		85D0315F1A210A7A005F5D43 /* Build configuration list for PBXNativeTarget "MegaGTDTests" */ = {
 			isa = XCConfigurationList;
@@ -428,8 +449,22 @@
 				85D031611A210A7A005F5D43 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		85FE05CB1A30B66800BFC79B /* Task.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				85FE05CC1A30B66800BFC79B /* Task.xcdatamodel */,
+			);
+			currentVersion = 85FE05CC1A30B66800BFC79B /* Task.xcdatamodel */;
+			path = Task.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 85D0312E1A210A79005F5D43 /* Project object */;
 }
