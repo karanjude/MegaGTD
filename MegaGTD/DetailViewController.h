@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <CoreData/CoreData.h>
 
-@interface DetailViewController : UITableViewController <UIActionSheetDelegate, NSFetchedResultsControllerDelegate>
+@interface DetailViewController : UITableViewController <UIActionSheetDelegate, NSFetchedResultsControllerDelegate, UIPickerViewDelegate, UIPickerViewDataSource>
 
 @property (strong, nonatomic) id detailItem;
 @property (strong, nonatomic) UIColor* foreColor;

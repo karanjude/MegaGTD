@@ -22,6 +22,10 @@
 
 @implementation AppDelegate
 
+NSString * const NotificationCategoryIdent  = @"ACTIONABLE";
+NSString * const NotificationActionOneIdent = @"OK";
+NSString * const NotificationActionTwoIdent = @"SNOOZE";
+
 @synthesize managedObjectModel = _managedObjectModel, managedObjectContext = _managedObjectContext, persistentStoreCoordinator = _persistentStoreCoordinator;
 
 
@@ -39,8 +43,64 @@
     MasterViewController *rootViewController = (MasterViewController *)[ viewControllers objectAtIndex:0];
     rootViewController.managedObjectContext = self.managedObjectContext;
     
+    UIMutableUserNotificationAction *action1;
+    action1 = [[UIMutableUserNotificationAction alloc] init];
+    [action1 setActivationMode:UIUserNotificationActivationModeBackground];
+    [action1 setTitle:@"Ok"];
+    [action1 setIdentifier:NotificationActionOneIdent];
+    [action1 setDestructive:NO];
+    [action1 setAuthenticationRequired:NO];
+
+    UIMutableUserNotificationAction *action2;
+    action2 = [[UIMutableUserNotificationAction alloc] init];
+    [action2 setActivationMode:UIUserNotificationActivationModeBackground];
+    [action2 setTitle:@"Snooze"];
+    [action2 setIdentifier:NotificationActionTwoIdent];
+    [action2 setDestructive:YES];
+    [action2 setAuthenticationRequired:NO];
+    
+    UIMutableUserNotificationCategory *actionCategory;
+    actionCategory = [[UIMutableUserNotificationCategory alloc] init];
+    [actionCategory setIdentifier:@"ACTIONABLE"];
+    [actionCategory setActions:@[action1, action2]
+                    forContext:UIUserNotificationActionContextDefault];
+    [actionCategory setActions:@[action1, action2] forContext:UIUserNotificationActionContextMinimal];
+    
+    NSSet *categories = [NSSet setWithObject:actionCategory];
+    
+    UIUserNotificationType types = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+    UIUserNotificationSettings *mySettings = [UIUserNotificationSettings settingsForTypes:types categories:categories];
+    
+    [[UIApplication sharedApplication] registerUserNotificationSettings:mySettings];
+    
+    
+    //[[UIApplication sharedApplication] cancelAllLocalNotifications];
     return YES;
 }
+
+-(void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification completionHandler:(void (^)())completionHandler
+{
+    if ([identifier isEqualToString:NotificationActionOneIdent]) {
+        
+        NSLog(@"You chose action 1.");
+    }
+    else if ([identifier isEqualToString:NotificationActionTwoIdent]) {
+        
+        NSLog(@"You chose action 2.");
+    }
+    if (completionHandler) {
+        
+        completionHandler();
+    }
+}
+
+/*
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+{
+    
+    UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:@"Notification Received" message:notification.alertBody delegate:nil 	cancelButtonTitle:@"OK" otherButtonTitles:@"Snooze", nil];
+    [alertView show];
+}*/
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
@@ -54,6 +114,7 @@
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+    application.applicationIconBadgeNumber = 0;
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -62,6 +123,7 @@
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    application.applicationIconBadgeNumber = 0;
 }
 
 /*

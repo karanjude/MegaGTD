@@ -33,6 +33,9 @@
     self.taskDescription.textColor = [UIColor grayColor];
     
     self.taskDescriptionLabel.textColor = [UIColor colorWithRed:0.540631 green:0.788434 blue:1 alpha:1];
+   
+    self.taskDescriptionLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    self.taskDescriptionLabel.numberOfLines = 0;
     
     UIBarButtonItem *newBackButton = [[UIBarButtonItem alloc] initWithTitle:@"Home" style:UIBarButtonSystemItemCancel target:self action:@selector(home:)];
     self.navigationItem.leftBarButtonItem=newBackButton;

@@ -10,6 +10,11 @@
 #import "DetailViewController.h"
 #import "InTaskViewController.h"
 
+#import <CoreGraphics/CoreGraphics.h>
+#import <QuartzCore/QuartzCore.h>
+
+#define kAppHasRunBeforeKey @"appFirstTimeRun"
+
 #define UIColorFromRGB(rgbValue, alphaValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:alphaValue]
 
 @interface MasterViewController ()
@@ -34,13 +39,136 @@
     }
 }
 
+- (void)showIntro {
+    UIView* rootView = self.navigationController.view;
+
+    EAIntroPage *page1 = [EAIntroPage page];
+    page1.title = @"MegaGTD";
+    page1.titlePositionY = 320;
+    page1.desc = @"Based on \"Getting Things Done Principle\", streaminline your TODO Tasks \n\n Create New Task using the \"+\" Button \n\n Organize tasks into various GTD ( In, NextActions, Project, WaitingFor, Done ) categories .";
+    page1.descPositionY = 180;
+    
+    // image is an instance of UIImage class that we will convert to grayscale
+    UIImage* image = [UIImage imageNamed:@"main_screen"];
+    page1.bgImage = [self blur:image andAlpha:.6f];
+    
+    EAIntroPage *page2 = [EAIntroPage page];
+    page2.title = @"Add New Task";
+    page2.desc = @"Provide Description for new tasks.";
+    page2.bgImage = [self blur:[UIImage imageNamed:@"add_task_screen"] andAlpha:.6f];
+    
+    EAIntroPage *page3 = [EAIntroPage page];
+    page3.title = @"Organize Tasks";
+    page3.titlePositionY = rootView.bounds.size.height - 60;
+    page3.desc = @"Move tasks into GTD categories. \n Schedule Tasks.";
+    page3.descPositionY = rootView.bounds.size.height - 80;
+    
+    page3.bgImage = [self blur:[UIImage imageNamed:@"task_options_screen"] andAlpha:.8f];
+    
+    EAIntroPage *page4 = [EAIntroPage page];
+    page4.title = @"Schedule Tasks";
+    page4.titlePositionY = 220;
+    page4.desc = @"Schedule Tasks Daily / Weekly / Monthly \n\n OR \n\n For a specific Date / Time.";
+    page4.bgImage = [self blur:[UIImage imageNamed:@"task_schedule_screen"] andAlpha:.6f];
+    page4.descPositionY = 180;
+
+    EAIntroPage *page5 = [EAIntroPage page];
+    page5.bgImage = [UIImage imageNamed:@"gtd"];
+    page5.title = @"GTD Principle";
+
+    
+    EAIntroView *intro = [[EAIntroView alloc] initWithFrame:rootView.bounds andPages:@[page1,page2,page3,page4, page5]];
+    [intro setDelegate:self];
+
+    [intro showInView:rootView animateDuration:0.3];
+    
+}
+
+- (UIImage*) blur:(UIImage*)theImage andAlpha:(float)alpha
+{
+    // ***********If you need re-orienting (e.g. trying to blur a photo taken from the device camera front facing camera in portrait mode)
+    // theImage = [self reOrientIfNeeded:theImage];
+    
+    // create our blurred image
+    CIContext *context = [CIContext contextWithOptions:nil];
+    CIImage *inputImage = [CIImage imageWithCGImage:theImage.CGImage];
+    
+    //First, we'll use CIAffineClamp to prevent black edges on our blurred image
+    //CIAffineClamp extends the edges off to infinity (check the docs, yo)
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    CIFilter *clampFilter = [CIFilter filterWithName:@"CIAffineClamp"];
+    [clampFilter setValue:inputImage forKeyPath:kCIInputImageKey];
+    [clampFilter setValue:[NSValue valueWithBytes:&transform objCType:@encode(CGAffineTransform)] forKeyPath:@"inputTransform"];
+    CIImage *clampedImage = [clampFilter outputImage];
+    
+    //Next, create some darkness
+    CIFilter* blackGenerator = [CIFilter filterWithName:@"CIConstantColorGenerator"];
+    CIColor* black = [CIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:alpha];
+    [blackGenerator setValue:black forKey:@"inputColor"];
+    CIImage* blackImage = [blackGenerator valueForKey:@"outputImage"];
+    
+    //Apply that black
+    CIFilter *compositeFilter = [CIFilter filterWithName:@"CIMultiplyBlendMode"];
+    [compositeFilter setValue:blackImage forKey:@"inputImage"];
+    [compositeFilter setValue:clampedImage forKey:@"inputBackgroundImage"];
+    CIImage *darkenedImage = [compositeFilter outputImage];
+    
+    //Third, blur the image
+    CIFilter *blurFilter = [CIFilter filterWithName:@"CIGaussianBlur"];
+    [blurFilter setDefaults];
+    [blurFilter setValue:@(5.0f) forKey:@"inputRadius"];
+    [blurFilter setValue:darkenedImage forKey:kCIInputImageKey];
+    CIImage *blurredImage = [blurFilter outputImage];
+    
+    CGImageRef cgimg = [context createCGImage:blurredImage fromRect:inputImage.extent];
+    UIImage *blurredAndDarkenedImage = [UIImage imageWithCGImage:cgimg];
+    CGImageRelease(cgimg);
+    
+    return blurredAndDarkenedImage;
+    
+}
+
+
+- (UIImage*) blur:(UIImage*)theImage
+{
+    // ***********If you need re-orienting (e.g. trying to blur a photo taken from the device camera front facing camera in portrait mode)
+    // theImage = [self reOrientIfNeeded:theImage];
+    
+    // create our blurred image
+    CIContext *context = [CIContext contextWithOptions:nil];
+    CIImage *inputImage = [CIImage imageWithCGImage:theImage.CGImage];
+    
+    // setting up Gaussian Blur (we could use one of many filters offered by Core Image)
+    CIFilter *filter = [CIFilter filterWithName:@"CIGaussianBlur"];
+    [filter setValue:inputImage forKey:kCIInputImageKey];
+    [filter setValue:[NSNumber numberWithFloat:5.0f] forKey:@"inputRadius"];
+    
+    CIImage *result = [filter valueForKey:kCIOutputImageKey];
+    
+    // CIGaussianBlur has a tendency to shrink the image a little,
+    // this ensures it matches up exactly to the bounds of our original image
+    CGImageRef cgImage = [context createCGImage:result fromRect:[inputImage extent]];
+    
+    UIImage *returnImage = [UIImage imageWithCGImage:cgImage];//create a UIImage for this function to "return" so that ARC can manage the memory of the blur... ARC can't manage CGImageRefs so we need to release it before this function "returns" and ends.
+    CGImageRelease(cgImage);//release CGImageRef because ARC doesn't manage this on its own.
+    
+    return returnImage;
+    
+    // *************** if you need scaling
+    // return [[self class] scaleIfNeeded:cgImage];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     // self.navigationItem.leftBarButtonItem = self.editButtonItem;
 
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
-    self.navigationItem.rightBarButtonItem = addButton;
+    UIBarButtonItem *helpButton = [[UIBarButtonItem alloc]initWithTitle:@"?" style:UIBarButtonItemStylePlain target:self action:@selector(showHelp:)];
+    
+    
+    
+    self.navigationItem.rightBarButtonItems = @[addButton, helpButton];
     /*
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
      */
@@ -130,6 +258,12 @@
                                                            shadow, NSShadowAttributeName,
                                                            [UIFont fontWithName:@"Arial" size:21.0], NSFontAttributeName, nil]];
 
+    if (![[[NSUserDefaults standardUserDefaults] valueForKey:kAppHasRunBeforeKey] boolValue]) {
+
+        [self showIntro];
+
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kAppHasRunBeforeKey];
+    }
     
     
 }
@@ -158,6 +292,10 @@
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)showHelp:(id)sender {
+    [self showIntro];
 }
 
 - (void)insertNewObject:(id)sender {

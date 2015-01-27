@@ -12,13 +12,27 @@
 
 #define UIColorFromRGB(rgbValue, alphaValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:alphaValue]
 
+#define kPickerAnimationDuration    0.40   // duration for the animation to slide the date picker into view
+
 @interface DetailViewController ()
 
 @property NSArray *backGroundColors;
 @property (nonatomic, strong) NSFetchedResultsController *fetchedResultsController;
+@property UIPickerView *picker;
+@property UIView *snapShot;
+@property UIBarButtonItem *doneButton;
+
+@property NSArray *scheduleTypes;
+@property NSArray *scheduleWeekly;
+@property NSArray *scheduleMonthly;
+@property NSArray *scheduleHourly;
+@property NSArray *scheduleMinutes;
+@property NSArray *emptyArray;
+
 
 @end
 
+static NSString* const SCHEDULE = @"Schedule";
 static NSString* const NEXT_ACTIONS = @"Next Actions";
 static NSString* const PROJECT = @"Project";
 static NSString* const WAITING_FOR = @"Waiting For";
@@ -108,6 +122,50 @@ static NSDictionary* categoryTitles;
                                                            shadow, NSShadowAttributeName,
                                                            [UIFont fontWithName:@"Arial" size:21.0], NSFontAttributeName, nil]];
     
+    self.doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(done_clicked:)];
+
+
+    self.scheduleTypes = [[NSArray alloc] initWithObjects:
+                          @"Daily",@"Weekly",@"Month", nil];
+    
+    self.emptyArray = [[NSArray alloc] initWithObjects:
+                       @"", nil];
+    
+    self.scheduleWeekly = [[NSArray alloc] initWithObjects:
+                            @"Day",
+                            @"Mon",@"Tue",@"Wed",@"Thu",@"Fri",
+                                @"Sat",@"Sun", nil
+                           ];
+
+    self.scheduleHourly = [[NSArray alloc] initWithObjects:
+                           @"Hr",@"00",
+                           @"01",@"02",@"03",@"04",@"05",
+                           @"06",@"07",@"08",@"09",@"10",
+                           @"11",@"12",@"13",@"14",@"15",
+                           @"16",@"17",@"18",@"19",@"20",
+                           @"21",@"22",@"23",
+                           nil];
+    
+    self.scheduleMinutes = [[NSArray alloc] initWithObjects:
+                            @"Mins",
+                            @"00",@"05",@"10",@"15",@"20",
+                            @"25",@"30",@"35",@"40",@"45",
+                            @"50",@"55",
+                            nil];
+
+    self.scheduleMonthly = [[NSArray alloc] initWithObjects:
+                           @"Day",@"00",
+                           @"01",@"02",@"03",@"04",@"05",
+                           @"06",@"07",@"08",@"09",@"10",
+                           @"11",@"12",@"13",@"14",@"15",
+                           @"16",@"17",@"18",@"19",@"20",
+                           @"21",@"22",@"23",@"24",@"25",
+                            @"26",@"27",@"28",@"29",@"30",
+                            @"31",
+                           nil];
+
+    
+    
     /*
     UIBarButtonItem *newBackButton = [[UIBarButtonItem alloc] initWithTitle:@"Home" style:UIBarButtonItemStyleBordered target:self action:@selector(home:)];
     self.navigationItem.leftBarButtonItem=newBackButton;
@@ -191,6 +249,20 @@ static NSDictionary* categoryTitles;
         [self presentViewController:navController animated:NO completion:nil];
 
     }else if([buttonTitle isEqualToString:@"Delete"]){
+        
+        UILocalNotification *notificationToCancel=nil;
+
+        for(UILocalNotification *aNotif in [[UIApplication sharedApplication] scheduledLocalNotifications]) {
+            if([[aNotif.userInfo objectForKey:@"ID"] isEqualToString:selectedTask.objectID.description]) {
+                notificationToCancel=aNotif;
+                break;
+            }
+        }
+        
+        if(nil != notificationToCancel){
+            [[UIApplication sharedApplication] cancelLocalNotification:notificationToCancel];
+        }
+        
         [self.managedObjectContext deleteObject:selectedTask];
         [self.managedObjectContext save:&error];
 
@@ -206,19 +278,292 @@ static NSDictionary* categoryTitles;
         UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:controller];
         
         [self presentViewController:navController animated:NO completion:nil];
+    }else if([buttonTitle isEqualToString:SCHEDULE]){
+        NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+        UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+        
+        CGRect frame = CGRectMake(CGRectGetMinX(cell.frame) - self.tableView.contentOffset.x, CGRectGetMaxY(cell.frame) , CGRectGetWidth(cell.frame), CGRectGetHeight(self.view.frame) - self.tableView.contentOffset.y);
+        
+        
+        
+        self.snapShot = [self.view resizableSnapshotViewFromRect:frame afterScreenUpdates:NO withCapInsets:UIEdgeInsetsZero];
+        
+        self.picker = [[UIPickerView alloc]initWithFrame:frame];
+        self.picker.dataSource = self;
+        self.picker.delegate = self;
+        self.picker.backgroundColor = [UIColor whiteColor];
+        
+        
+        self.snapShot.frame = frame;
+        [self.view addSubview:self.snapShot];
+        [self.view addSubview:self.picker];
+        
+        [self.view insertSubview:self.snapShot aboveSubview:self.picker];
+        
+        
+        NSDate* date = selectedTask.startDate;
+        NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+        
+        [calendar setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en-US"]];
+        NSDateComponents *nowComponents = [calendar components:NSCalendarUnitYear |NSCalendarUnitMonth| NSCalendarUnitWeekOfMonth | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond fromDate:date];
+        
+        NSInteger hour = [nowComponents hour] + 1;
+        NSInteger mins = [nowComponents minute];
+        NSInteger minutes = ((int)(mins / 5 ))  + 1;
+        
+        [self.picker selectRow:hour inComponent:2 animated:NO];
+        [self.picker selectRow:minutes inComponent:3 animated:NO];
+        
+        [UIView animateWithDuration:2 animations:^{
+            self.snapShot.frame = CGRectOffset(self.snapShot.frame, 0, CGRectGetHeight(self.picker.frame));
+            
+            self.navigationItem.rightBarButtonItem= self.doneButton;
+
+        }];
+    }
+}
+
+-(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
+{
+    return 4;
+}
+
+- (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component{
+        if (component == 0) {
+            [pickerView reloadComponent:1];
+            
+            [pickerView selectRow:0 inComponent:1 animated:YES];
+        }
+
+}
+
+-(NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
+{
+    if (0 == component) {
+        return [self.scheduleTypes count];
+    }else if (1 == component){
+        NSUInteger selectedRow = [self.picker selectedRowInComponent:0];
+        if(1 == selectedRow){
+            return [self.scheduleWeekly count];
+        }else if(2 == selectedRow){
+            return [self.scheduleMonthly count];
+        }
+        
+        return 0;
+    }else if (2 == component){
+        return [self.scheduleHourly count];
+    }else if(3 == component){
+        return [self.scheduleMinutes count];
+    }
+    
+    return 0;
+}
+
+-(NSString *)pickerView:(UIPickerView *)pickerView
+            titleForRow:(NSInteger)row
+           forComponent:(NSInteger)component
+{
+    if (0 == component) {
+        return [self.scheduleTypes objectAtIndex:row];
+    }else if (1 == component){
+        NSUInteger selectedRow = [self.picker selectedRowInComponent:0];
+        if(1 == selectedRow){
+            return [self.scheduleWeekly objectAtIndex:row];
+        }else if(2 == selectedRow){
+            return [self.scheduleMonthly objectAtIndex:row];
+        }
+        
+        return @"";
+    }else if (2 == component){
+        return [self.scheduleHourly objectAtIndex:row];
+    }else if(3 == component){
+        return [self.scheduleMinutes objectAtIndex:row];
+    }
+
+    return nil;
+}
+
+-(void)done_clicked:(UIBarButtonItem *)sender {
+    if(nil != self.picker){
+
+        NSString *v1 = [self.picker.delegate pickerView:self.picker titleForRow:[self.picker  selectedRowInComponent:0] forComponent:0];
+        NSString *v2 = [self.picker.delegate pickerView:self.picker titleForRow:[self.picker  selectedRowInComponent:1] forComponent:1];
+        NSString *v3 = [self.picker.delegate pickerView:self.picker titleForRow:[self.picker  selectedRowInComponent:2] forComponent:2];
+        NSString *v4 = [self.picker.delegate pickerView:self.picker titleForRow:[self.picker  selectedRowInComponent:3] forComponent:3];
+        
+        
+        NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+        Task *selectedTask = (Task *)[[self fetchedResultsController] objectAtIndexPath:indexPath];
+        
+        NSLog(@" Value: %@", @[v1, v2, v3, v4, selectedTask.objectID.description ]);
+
+
+        if([v3 isEqualToString:@"Hr"] || [v4 isEqualToString:@"Mins"]){
+            return;
+        }
+        
+        NSInteger hourValue = [v3 integerValue];
+        NSInteger minuteValue = [v4 integerValue ];
+        NSInteger interval = ( hourValue * 60 * 60) + (minuteValue * 60);
+        
+        NSLog([NSString stringWithFormat:@"Interval %@", @(interval)]);
+        
+        [UIView animateWithDuration:.5
+                         animations:^{
+                             self.snapShot.frame = CGRectOffset(self.snapShot.frame, 0, - CGRectGetHeight(self.picker.frame));
+                         
+                         }
+                         completion:^(BOOL finished){
+                             
+                             UILocalNotification* localNotification = [[UILocalNotification alloc] init];
+                             localNotification.alertBody = selectedTask.taskDescription;
+                             localNotification.timeZone = [NSTimeZone defaultTimeZone];
+                             localNotification.soundName = UILocalNotificationDefaultSoundName;
+                             localNotification.applicationIconBadgeNumber = 1;
+                             //localNotification.hasAction = YES;
+                             //localNotification.alertAction = @"Snooze";
+                             localNotification.category = @"ACTIONABLE";
+                             
+                             NSDictionary *dict = @{@"ID": selectedTask.objectID.description};
+                             localNotification.userInfo = dict;
+                             localNotification.repeatCalendar = [NSCalendar currentCalendar];
+                             
+                             if([v1 isEqualToString:@"Daily"]){
+                                 NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+                                 calendar.timeZone = [NSTimeZone systemTimeZone];
+                                 calendar.locale = [NSLocale currentLocale];
+                                 
+                                 NSDateComponents *dateComponents = [[NSDateComponents alloc] init];
+                                 [dateComponents setDay:1];
+                                 
+                                 NSDate *currentDate = [[NSCalendar currentCalendar]
+                                                        dateByAddingComponents:dateComponents
+                                                        toDate:[NSDate date] options:0];
+                                 
+                                 NSDateComponents *components = [calendar components:NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit
+                                                                            fromDate:[NSDate date]];
+                                 
+                                 [components setHour:hourValue];
+                                 [components setMinute:minuteValue];
+                                 [components setSecond:0];
+                                 
+                                 NSDate *nextDate = [calendar dateFromComponents:components];;
+
+                                 localNotification.fireDate = nextDate;
+                                 localNotification.repeatInterval =NSCalendarUnitDay;
+                                 
+                                 selectedTask.startDate = nextDate;
+                             }else if([v1 isEqualToString:@"Weekly"]){
+                                 NSInteger weekday = 1; // Sunday
+                                 
+                                 if([v2 isEqualToString:@"Mon"]){
+                                     weekday = 2;
+                                 }else if([v2 isEqualToString:@"Tue"]){
+                                     weekday = 3;
+                                 }else if([v2 isEqualToString:@"Wed"]){
+                                     weekday = 4;
+                                 }else if([v2 isEqualToString:@"Thu"]){
+                                     weekday = 5;
+                                 }else if([v2 isEqualToString:@"Fri"]){
+                                     weekday = 6;
+                                 }else if([v2 isEqualToString:@"Sat"]){
+                                     weekday = 7;
+                                 }
+                                 
+                                 NSDate *today = [NSDate date];
+                                 NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+
+                                 [calendar setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en-US"]];
+                                 NSDateComponents *nowComponents = [calendar components:NSCalendarUnitYear |NSCalendarUnitMonth| NSCalendarUnitWeekOfMonth | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond fromDate:today];
+
+                                 
+                                 [nowComponents setWeekday:weekday]; //Sunday
+                                 [nowComponents setHour:hourValue]; // 12:00 AM = midnight (12:00 PM would be 12)
+                                 [nowComponents setMinute:minuteValue];
+                                 [nowComponents setSecond:0];
+                                 NSDate *fireDate = [calendar dateFromComponents:nowComponents];
+
+                                 localNotification.fireDate = fireDate;
+                                 localNotification.repeatInterval =NSCalendarUnitWeekday;
+                                 
+                                 selectedTask.startDate = fireDate;
+                             }else if([v1 isEqualToString:@"Month"]){
+                                 
+                                 NSInteger day = [v2 integerValue];
+                                 NSDate *today = [NSDate date];
+                                 
+                                 NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+                                 
+                                 [calendar setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en-US"]];
+                                 NSDateComponents *nowComponents = [calendar components:NSCalendarUnitYear |NSCalendarUnitMonth| NSCalendarUnitWeekOfMonth | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond fromDate:today];
+
+                                 [nowComponents setDay:day]; //Sunday
+                                 [nowComponents setHour:hourValue]; // 12:00 AM = midnight (12:00 PM would be 12)
+                                 [nowComponents setMinute:minuteValue];
+                                 [nowComponents setSecond:0];
+                                 NSDate *fireDate = [calendar dateFromComponents:nowComponents];
+                                 
+                                 localNotification.fireDate = fireDate;
+                                 localNotification.repeatInterval=NSCalendarUnitMonth;
+                             
+                                 selectedTask.startDate = fireDate;
+                             }
+                             
+                             NSError* error;
+                             [self.managedObjectContext save:&error];
+
+                             [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
+
+                             //[[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+                             
+                             [self.picker removeFromSuperview];
+                             [self.snapShot removeFromSuperview];
+                             self.navigationItem.rightBarButtonItem= nil;
+                             
+                             
+                             self.picker = nil;
+                             self.snapShot = nil;
+                         }
+        ];
+        
+        
     }
 }
 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Move Task To :"
-                                                             delegate:self
-                                                    cancelButtonTitle:@"Cancel"
-                                               destructiveButtonTitle:@"Delete"
-                                                    otherButtonTitles:NEXT_ACTIONS, PROJECT, WAITING_FOR, DONE, nil];
+    if(nil != self.picker){
+        [UIView animateWithDuration:.5
+                         animations:^{
+                             self.snapShot.frame = CGRectOffset(self.snapShot.frame, 0, - CGRectGetHeight(self.picker.frame));
+                             
+                         }
+                         completion:^(BOOL finished){
+                             [self.picker removeFromSuperview];
+                             [self.snapShot removeFromSuperview];
+                             self.navigationItem.rightBarButtonItem= nil;
+
+                             
+                             self.picker = nil;
+                             self.snapShot = nil;
+                         }
+         ];
+        
+    }else{
+        UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Move Task To :"
+                                                                 delegate:self
+                                                        cancelButtonTitle:@"Cancel"
+                                                   destructiveButtonTitle:@"Delete"
+                                                        otherButtonTitles:SCHEDULE, NEXT_ACTIONS, PROJECT, WAITING_FOR, DONE, nil];
+        
+        
+        [actionSheet showInView:self.view];
+        
+    }
+
     
-    [actionSheet showInView:self.view];
+    
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -228,6 +573,8 @@ static NSDictionary* categoryTitles;
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId forIndexPath:indexPath];
     cell.textLabel.text =  task.taskDescription;
+    cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
+    cell.textLabel.numberOfLines = 0;
     cell.textLabel.backgroundColor = self.backColor;
     cell.textLabel.textColor = [UIColor grayColor];
     cell.textLabel.font = [UIFont boldSystemFontOfSize:20.0];

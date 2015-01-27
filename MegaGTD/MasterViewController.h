@@ -9,9 +9,11 @@
 #import <UIKit/UIKit.h>
 #import <CoreData/CoreData.h>
 
+#import "EAIntroView.h"
+
 @class DetailViewController;
 
-@interface MasterViewController : UITableViewController<NSFetchedResultsControllerDelegate>
+@interface MasterViewController : UITableViewController<NSFetchedResultsControllerDelegate, EAIntroDelegate>
 
 @property (strong, nonatomic) DetailViewController *detailViewController;
 
