@@ -1,9 +1,9 @@
 //
 //  Task.h
-//  MegaGTD
+//  
 //
-//  Created by Karan Singh on 12/4/14.
-//  Copyright (c) 2014 Karan Singh. All rights reserved.
+//  Created by Karan Singh on 8/28/15.
+//
 //
 
 #import <Foundation/Foundation.h>
@@ -12,9 +12,11 @@
 
 @interface Task : NSManagedObject
 
-@property (nonatomic, retain) NSString * taskDescription;
-@property (nonatomic, retain) NSDate * startDate;
-@property (nonatomic, retain) NSDate * completionDate;
 @property (nonatomic, retain) NSString * category;
+@property (nonatomic, retain) NSDate * completionDate;
+@property (nonatomic, retain) NSDate * startDate;
+@property (nonatomic, retain) NSString * taskDescription;
+@property (nonatomic, retain) NSNumber * updateCount;
+@property (nonatomic, retain) NSDate * updateDate;
 
 @end

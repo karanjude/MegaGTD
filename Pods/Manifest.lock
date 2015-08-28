@@ -1,10 +1,13 @@
 PODS:
   - EAIntroView (2.6.4)
+  - SWTableViewCell (0.3.7)
 
 DEPENDENCIES:
   - EAIntroView (~> 2.6.0)
+  - SWTableViewCell (~> 0.3.7)
 
 SPEC CHECKSUMS:
-  EAIntroView: 8f66dc6b79f2d52db26af8fc5476a05ffc549d4c
+  EAIntroView: df7dc18da73e1831d06878b9c0e13da78e6bb3ce
+  SWTableViewCell: 2a94aadc9d47b2b611fa064566bf57948b95b579
 
-COCOAPODS: 0.35.0
+COCOAPODS: 0.38.2

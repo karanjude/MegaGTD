@@ -4,7 +4,7 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
-		<key>Pods-MegaGTD-EAIntroView.xcscheme</key>
+		<key>EAIntroView.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -14,15 +14,25 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>SWTableViewCell.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>53D8472D3F0182D5D4DD8408</key>
+		<key>63B510643155CB3CBC740965F4892E66</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>CCCB0BC7E1CF17B116CC11C3</key>
+		<key>7A153A40F53CF9507D5551D94F8C505C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>CDE0B7668B6EC1B2BF166A65E070AF5E</key>
 		<dict>
 			<key>primary</key>
 			<true/>

@@ -73,6 +73,19 @@ NSString * const NotificationActionTwoIdent = @"SNOOZE";
     
     [[UIApplication sharedApplication] registerUserNotificationSettings:mySettings];
     
+    UIApplication * app = [UIApplication sharedApplication];
+    NSArray * events = [app scheduledLocalNotifications];
+    for (UILocalNotification *localNotification in events) {
+        
+//            NSLog(@"the notification this is canceld is %@", localNotification.alertBody);
+            
+//            [[UIApplication sharedApplication] cancelLocalNotification:localNotification] ; // delete the notification from the system
+            
+        
+    }
+    
+    //[[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+
     
     //[[UIApplication sharedApplication] cancelAllLocalNotifications];
     return YES;
@@ -152,6 +165,10 @@ NSString * const NotificationActionTwoIdent = @"SNOOZE";
         return _managedObjectModel;
     }
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Task" withExtension:@"momd"];
+    if(!modelURL)
+        modelURL = [[NSBundle mainBundle] URLForResource:@"Task" withExtension:@"mom"];
+    
+
     _managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
     return _managedObjectModel;
 }
@@ -198,10 +215,73 @@ NSString * const NotificationActionTwoIdent = @"SNOOZE";
          
          */
         NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-        abort();
+        
+        NSFileManager *fm = [NSFileManager defaultManager];
+        // Move Incompatible Store
+        if ([fm fileExistsAtPath:[storeURL path]]) {
+            NSURL *corruptURL = [[self applicationIncompatibleStoresDirectory] URLByAppendingPathComponent:[self nameForIncompatibleStore]];
+            
+            // Move Corrupt Store
+            NSError *errorMoveStore = nil;
+            [fm moveItemAtURL:storeURL toURL:corruptURL error:&errorMoveStore];
+            
+            if (errorMoveStore) {
+                NSLog(@"Unable to move corrupt store.");
+            }
+        }
+        
+        //abort();
     }
     
     return _persistentStoreCoordinator;
+}
+
+- (NSURL *)applicationStoresDirectory {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSURL *applicationApplicationSupportDirectory = [[fm URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask] lastObject];
+    NSURL *URL = [applicationApplicationSupportDirectory URLByAppendingPathComponent:@"Stores"];
+    
+    if (![fm fileExistsAtPath:[URL path]]) {
+        NSError *error = nil;
+        [fm createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
+        
+        if (error) {
+            NSLog(@"Unable to create directory for data stores.");
+            
+            return nil;
+        }
+    }
+    
+    return URL;
+}
+
+- (NSURL *)applicationIncompatibleStoresDirectory {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSURL *URL = [[self applicationStoresDirectory] URLByAppendingPathComponent:@"Incompatible"];
+    
+    if (![fm fileExistsAtPath:[URL path]]) {
+        NSError *error = nil;
+        [fm createDirectoryAtURL:URL withIntermediateDirectories:YES attributes:nil error:&error];
+        
+        if (error) {
+            NSLog(@"Unable to create directory for corrupt data stores.");
+            
+            return nil;
+        }
+    }
+    
+    return URL;
+}
+
+- (NSString *)nameForIncompatibleStore {
+    // Initialize Date Formatter
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    
+    // Configure Date Formatter
+    [dateFormatter setFormatterBehavior:NSDateFormatterBehavior10_4];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
+    
+    return [NSString stringWithFormat:@"%@.sqlite", [dateFormatter stringFromDate:[NSDate date]]];
 }
 
 

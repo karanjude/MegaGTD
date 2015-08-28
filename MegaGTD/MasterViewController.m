@@ -238,9 +238,14 @@
         NSDictionary* resultDict = object;
         NSString* categoryValue = resultDict[@"category"];
         NSInteger countValue = [resultDict[@"count"] integerValue];
+        NSArray *array = [categoryValue componentsSeparatedByString:@":"];
         
-        NSNumber *tempNumber = [[NSNumber alloc] initWithInteger:countValue];
-        self.categoryCount[categoryValue] = tempNumber;
+        if ([self.categoryCount objectForKey:array[0]]) {
+            NSNumber* v = self.categoryCount[array[0]];
+            self.categoryCount[array[0]] = [[NSNumber alloc] initWithInteger: [v intValue] + countValue];
+        }else{
+            self.categoryCount[array[0]] = [[NSNumber alloc] initWithInteger:countValue];
+        }
         
     }
     
@@ -258,8 +263,9 @@
                                                            shadow, NSShadowAttributeName,
                                                            [UIFont fontWithName:@"Arial" size:21.0], NSFontAttributeName, nil]];
 
-    if (![[[NSUserDefaults standardUserDefaults] valueForKey:kAppHasRunBeforeKey] boolValue]) {
 
+    
+    if (![[[NSUserDefaults standardUserDefaults] valueForKey:kAppHasRunBeforeKey] boolValue]) {
         [self showIntro];
 
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kAppHasRunBeforeKey];

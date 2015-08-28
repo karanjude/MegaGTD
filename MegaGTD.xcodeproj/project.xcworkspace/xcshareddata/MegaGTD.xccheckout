@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>9F188D09-3403-44E5-81F8-006D4CA16122</string>
 	<key>IDESourceControlProjectName</key>
-	<string>MegaGTD</string>
+	<string>project</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>B40ED6B85AD3616D6814C16B27A657296C57F5C6</key>
 		<string>https://github.com/karanjude/MegaGTD.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>MegaGTD.xcodeproj</string>
+	<string>MegaGTD.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>B40ED6B85AD3616D6814C16B27A657296C57F5C6</key>

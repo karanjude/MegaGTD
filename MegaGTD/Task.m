@@ -1,9 +1,9 @@
 //
 //  Task.m
-//  MegaGTD
+//  
 //
-//  Created by Karan Singh on 12/4/14.
-//  Copyright (c) 2014 Karan Singh. All rights reserved.
+//  Created by Karan Singh on 8/28/15.
+//
 //
 
 #import "Task.h"
@@ -11,9 +11,11 @@
 
 @implementation Task
 
-@dynamic taskDescription;
-@dynamic startDate;
-@dynamic completionDate;
 @dynamic category;
+@dynamic completionDate;
+@dynamic startDate;
+@dynamic taskDescription;
+@dynamic updateCount;
+@dynamic updateDate;
 
 @end

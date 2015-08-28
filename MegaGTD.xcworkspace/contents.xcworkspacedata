@@ -2,6 +2,12 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:MegaGTD/Task.h">
+   </FileRef>
+   <FileRef
+      location = "group:MegaGTD/Task.m">
+   </FileRef>
+   <FileRef
       location = "group:MegaGTD.xcodeproj">
    </FileRef>
    <FileRef

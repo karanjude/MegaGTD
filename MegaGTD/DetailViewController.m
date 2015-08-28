@@ -9,6 +9,7 @@
 #import "DetailViewController.h"
 #import "Task.h"
 #import "MasterViewController.h"
+#import "SWTableViewCell.h"
 
 #define UIColorFromRGB(rgbValue, alphaValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:alphaValue]
 
@@ -24,11 +25,15 @@
 
 @property NSArray *scheduleTypes;
 @property NSArray *scheduleWeekly;
+@property NSArray *weekDayMap;
 @property NSArray *scheduleMonthly;
 @property NSArray *scheduleHourly;
 @property NSArray *scheduleMinutes;
 @property NSArray *emptyArray;
+@property NSInteger selectedSchedule;
+@property Task * selectedTask;
 
+@property (nonatomic, strong) UITableViewCell *prototypeCell;
 
 @end
 
@@ -44,6 +49,15 @@ static NSDictionary* categoryTitles;
 
 #pragma mark - Managing the detail item
 
+
+- (UITableViewCell *)prototypeCell
+{
+    if (!_prototypeCell)
+    {
+        _prototypeCell = [self.tableView dequeueReusableCellWithIdentifier:@"DetailCell1"];
+    }
+    return _prototypeCell;
+}
 
 - (void)awakeFromNib
 {
@@ -146,6 +160,9 @@ static NSDictionary* categoryTitles;
                            @"21",@"22",@"23",
                            nil];
     
+    self.weekDayMap = @[@0,@7,@1,@2,@3,@4,@5,@6];
+
+    
     self.scheduleMinutes = [[NSArray alloc] initWithObjects:
                             @"Mins",
                             @"00",@"05",@"10",@"15",@"20",
@@ -196,6 +213,11 @@ static NSDictionary* categoryTitles;
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     id <NSFetchedResultsSectionInfo> sectionInfo = [[self.fetchedResultsController sections] objectAtIndex:section];
     return [sectionInfo numberOfObjects];
+}
+
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return YES;
 }
 
 - (void)actionSheet:(UIActionSheet *)popup clickedButtonAtIndex:(NSInteger)buttonIndex {
@@ -305,14 +327,40 @@ static NSDictionary* categoryTitles;
         NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
         
         [calendar setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en-US"]];
-        NSDateComponents *nowComponents = [calendar components:NSCalendarUnitYear |NSCalendarUnitMonth| NSCalendarUnitWeekOfMonth | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond fromDate:date];
+        NSDateComponents *nowComponents = [calendar components:NSCalendarUnitYear |NSCalendarUnitMonth| NSCalendarUnitWeekOfMonth | NSCalendarUnitHour | NSWeekdayCalendarUnit| NSCalendarUnitMinute | NSCalendarUnitSecond fromDate:date];
         
         NSInteger hour = [nowComponents hour] + 1;
         NSInteger mins = [nowComponents minute];
+        NSInteger weekday = [nowComponents weekday];
+        NSInteger month = [nowComponents month];
         NSInteger minutes = ((int)(mins / 5 ))  + 1;
         
+        NSLog(@"Task category %@", selectedTask.category);
+        
+        if([selectedTask.category hasSuffix:@"Weekly"]){
+            [self.picker selectRow:1 inComponent:0 animated:NO];
+            [self.picker reloadComponent:1];
+
+            if(weekday == 1){
+                weekday = 7;
+            }else {
+                weekday = weekday - 1;
+            }
+            
+            [self.picker selectRow:weekday inComponent:1 animated:NO];
+            self.selectedSchedule = 1;
+        }else if([selectedTask.category hasSuffix:@"Month"]){
+            [self.picker selectRow:2 inComponent:0 animated:NO];
+            [self.picker selectRow:month inComponent:1 animated:NO];
+            self.selectedSchedule = 2;
+        }else{
+            [self.picker selectRow:0 inComponent:0 animated:NO];
+            self.selectedSchedule = 0;
+        }
+
         [self.picker selectRow:hour inComponent:2 animated:NO];
         [self.picker selectRow:minutes inComponent:3 animated:NO];
+        
         
         [UIView animateWithDuration:2 animations:^{
             self.snapShot.frame = CGRectOffset(self.snapShot.frame, 0, CGRectGetHeight(self.picker.frame));
@@ -342,7 +390,8 @@ static NSDictionary* categoryTitles;
     if (0 == component) {
         return [self.scheduleTypes count];
     }else if (1 == component){
-        NSUInteger selectedRow = [self.picker selectedRowInComponent:0];
+        NSInteger selectedRow = [self.picker selectedRowInComponent:0];
+        //NSInteger selectedRow = self.selectedSchedule;
         if(1 == selectedRow){
             return [self.scheduleWeekly count];
         }else if(2 == selectedRow){
@@ -367,6 +416,7 @@ static NSDictionary* categoryTitles;
         return [self.scheduleTypes objectAtIndex:row];
     }else if (1 == component){
         NSUInteger selectedRow = [self.picker selectedRowInComponent:0];
+        //NSInteger selectedRow = self.selectedSchedule;
         if(1 == selectedRow){
             return [self.scheduleWeekly objectAtIndex:row];
         }else if(2 == selectedRow){
@@ -415,6 +465,25 @@ static NSDictionary* categoryTitles;
                          }
                          completion:^(BOOL finished){
                              
+                             UILocalNotification *notificationToCancel=nil;
+                             
+                             /**
+                              Delete existing notification
+                              **/
+                             for(UILocalNotification *aNotif in [[UIApplication sharedApplication] scheduledLocalNotifications]) {
+                                 if([[aNotif.userInfo objectForKey:@"ID"] isEqualToString:selectedTask.objectID.description]) {
+                                     notificationToCancel=aNotif;
+                                     break;
+                                 }
+                             }
+                             
+                             if(nil != notificationToCancel){
+                                 [[UIApplication sharedApplication] cancelLocalNotification:notificationToCancel];
+                             }
+
+                             /**
+                              Schedule new notification
+                              **/
                              UILocalNotification* localNotification = [[UILocalNotification alloc] init];
                              localNotification.alertBody = selectedTask.taskDescription;
                              localNotification.timeZone = [NSTimeZone defaultTimeZone];
@@ -509,17 +578,28 @@ static NSDictionary* categoryTitles;
                                  selectedTask.startDate = fireDate;
                              }
                              
+                             NSString *dateString = [NSDateFormatter
+                                                     localizedStringFromDate:selectedTask.startDate
+                                                                                   dateStyle:NSDateFormatterShortStyle
+                                                                                   timeStyle:NSDateFormatterFullStyle];
+                             
+                             NSArray *array = [selectedTask.category componentsSeparatedByString:@":"];
+                             selectedTask.category = [NSString stringWithFormat:@"%@:%@", array[0], v1];
+                             
+                             NSLog(@" Task : %@", @[selectedTask.taskDescription, selectedTask.category,  dateString ]);
+                             
                              NSError* error;
                              [self.managedObjectContext save:&error];
 
                              [[UIApplication sharedApplication] scheduleLocalNotification:localNotification];
 
-                             //[[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+                             [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
                              
                              [self.picker removeFromSuperview];
                              [self.snapShot removeFromSuperview];
                              self.navigationItem.rightBarButtonItem= nil;
                              
+                             [self.tableView reloadData];
                              
                              self.picker = nil;
                              self.snapShot = nil;
@@ -566,32 +646,145 @@ static NSDictionary* categoryTitles;
     
 }
 
+- (NSArray *)rightButtons
+{
+    
+    NSMutableArray *rightUtilityButtons = [NSMutableArray new];
+    /*
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.78f green:0.78f blue:0.8f alpha:1.0]
+                                                title:@"More"];
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:1.0f green:0.231f blue:0.188 alpha:1.0f]
+                                                title:@"Delete"];
+    
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:1.0f green:1.0f blue:0.35f alpha:1.0]
+                                                icon:[UIImage imageNamed:@"clock.png"]];*/
+    
+    [rightUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor grayColor]
+                                                icon:[UIImage imageNamed:@"clock.png"]];
+    
+    return rightUtilityButtons;
+}
+
+- (NSArray *)leftButtons
+{
+    NSMutableArray *leftUtilityButtons = [NSMutableArray new];
+    
+/*
+    [leftUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.07 green:0.75f blue:0.16f alpha:1.0]
+                                                icon:[UIImage imageNamed:@"check.png"]];
+    [leftUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:1.0f green:1.0f blue:0.35f alpha:1.0]
+                                                icon:[UIImage imageNamed:@"clock.png"]];
+    [leftUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:1.0f green:0.231f blue:0.188f alpha:1.0]
+                                                icon:[UIImage imageNamed:@"cross.png"]];
+    [leftUtilityButtons sw_addUtilityButtonWithColor:
+     [UIColor colorWithRed:0.55f green:0.27f blue:0.07f alpha:1.0]
+                                                icon:[UIImage imageNamed:@"list.png"]];
+*/
+    
+
+
+    return leftUtilityButtons;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     NSString * cellId = @"DetailCell1";
     
     Task *task = [self.fetchedResultsController objectAtIndexPath:indexPath];
     
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId forIndexPath:indexPath];
+    SWTableViewCell *cell = (SWTableViewCell *)[tableView dequeueReusableCellWithIdentifier:cellId];
+    cell = [[SWTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellId];
+    
+    if([task.category hasPrefix:@"project"]){
+        //        cell.leftUtilityButtons = [self leftButtons];
+        cell.rightUtilityButtons = [self rightButtons];
+        cell.delegate = self;
+    } 
+    
+    
+    //UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId forIndexPath:indexPath];
     cell.textLabel.text =  task.taskDescription;
     cell.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
     cell.textLabel.numberOfLines = 0;
     cell.textLabel.backgroundColor = self.backColor;
     cell.textLabel.textColor = [UIColor grayColor];
     cell.textLabel.font = [UIFont boldSystemFontOfSize:20.0];
-    
     cell.contentView.backgroundColor = self.backColor;
-    cell.backgroundColor = self.backColor;
+
+    if([task.category hasPrefix:@"project"] && task.updateDate != nil && task.updateCount != nil){
+        
+        NSString *dateString = [NSDateFormatter localizedStringFromDate:task.updateDate
+                                                              dateStyle:NSDateFormatterShortStyle
+                                                              timeStyle:NSDateFormatterShortStyle];
+        
+        NSString* suffix = @"times";
+        if([task.updateCount longValue] == 1){
+            suffix = @"time";
+        }
+        
+        cell.detailTextLabel.text = [NSString stringWithFormat:@" %@  Updated: %@ %@", dateString, [task.updateCount stringValue] , suffix ];
+        cell.detailTextLabel.textColor = [UIColor lightGrayColor];
+        cell.detailTextLabel.font = [UIFont systemFontOfSize:10.0];
+    }
     
-    UIView* separatorLineView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, cell.contentView.frame.size.width , 1)];
+ /*
+    UIView* separatorLineView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width , 1)];
     separatorLineView.backgroundColor = [UIColor grayColor];
     [cell.contentView addSubview:separatorLineView];
+ */
     
     return cell;
 }
 
+// click event on right utility button
+- (void)swipeableTableViewCell:(SWTableViewCell *)cell didTriggerRightUtilityButtonWithIndex:(NSInteger)index {
+    
+    if(index == 0){
+        NSIndexPath *cellindexPath = [self.tableView indexPathForCell:cell];
+
+        Task *taskfForCell = (Task *)[[self fetchedResultsController] objectAtIndexPath:cellindexPath];
+        taskfForCell.updateDate = [NSDate date];
+        if(taskfForCell.updateCount == nil){
+            taskfForCell.updateCount = [NSNumber numberWithLong:0];
+        }else{
+            long updateCount = 1 + [taskfForCell.updateCount longValue];
+            taskfForCell.updateCount = [NSNumber numberWithLong:updateCount];
+        }
+        
+        NSLog(@"clock button was pressed for %@", taskfForCell.taskDescription );
+        
+        NSError* error;
+        if([self.managedObjectContext save:&error]){
+            NSError* error;
+            [self.fetchedResultsController performFetch:&error ];
+            
+            [cell hideUtilityButtonsAnimated:YES];
+            [self.tableView reloadData];
+        }
+
+        [cell hideUtilityButtonsAnimated:YES];
+
+    }
+}
+
+- (void)tableView:(UITableView *)tableView
+moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath
+      toIndexPath:(NSIndexPath *)destinationIndexPath;
+{
+
+    
+}
+
+
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
     // Return NO if you do not want the specified item to be editable.
-    return NO;
+    return YES;
 }
 
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
@@ -618,10 +811,13 @@ static NSDictionary* categoryTitles;
     
     // Create the sort descriptors array.
     NSSortDescriptor *startDateDescriptor = [[NSSortDescriptor alloc] initWithKey:@"startDate" ascending:NO];
-    NSArray *sortDescriptors = @[startDateDescriptor];
+    NSSortDescriptor *updateDateDescriptor = [[NSSortDescriptor alloc] initWithKey:@"updateDate" ascending:YES];
+
+    NSArray *sortDescriptors = @[updateDateDescriptor, startDateDescriptor];
     [fetchRequest setSortDescriptors:sortDescriptors];
     
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"category == %@", self.category];
+    // NSPredicate *predicate = [NSPredicate predicateWithFormat:@"category == %@", self.category];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"category BEGINSWITH %@", self.category];
     [fetchRequest setPredicate:predicate];
     
     // Create and initialize the fetch results controller.
@@ -651,9 +847,15 @@ static NSDictionary* categoryTitles;
     [self.tableView beginUpdates];
 }
 
+- (void)configureCell:(UITableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath
+{
+    NSManagedObject *note = [self.fetchedResultsController objectAtIndexPath:indexPath];
+}
+
 - (void)controller:(NSFetchedResultsController *)controller didChangeObject:(id)anObject atIndexPath:(NSIndexPath *)indexPath forChangeType:(NSFetchedResultsChangeType)type newIndexPath:(NSIndexPath *)newIndexPath {
     
     UITableView *tableView = self.tableView;
+    NSError* error;
     
     switch(type) {
             
@@ -665,9 +867,16 @@ static NSDictionary* categoryTitles;
             [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
             break;
             
+        case NSFetchedResultsChangeUpdate:
+            [self configureCell:[self.tableView
+                                 cellForRowAtIndexPath:indexPath]
+                    atIndexPath:indexPath];
+            break;
+            
         case NSFetchedResultsChangeMove:
             [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
             [tableView insertRowsAtIndexPaths:@[newIndexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+
             break;
     }
 }
@@ -683,6 +892,16 @@ static NSDictionary* categoryTitles;
         case NSFetchedResultsChangeDelete:
             [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex] withRowAnimation:UITableViewRowAnimationAutomatic];
             break;
+            
+        case NSFetchedResultsChangeUpdate:
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:sectionIndex] withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+            
+        case NSFetchedResultsChangeMove:
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:sectionIndex] withRowAnimation:UITableViewRowAnimationAutomatic];
+
+            [self.tableView insertSections:[NSIndexSet indexSetWithIndex:sectionIndex] withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
     }
 }
 
@@ -690,7 +909,23 @@ static NSDictionary* categoryTitles;
     
     // The fetch controller has sent all current change notifications, so tell the table view to process all updates.
     [self.tableView endUpdates];
+    
 }
 
+- (CGFloat) tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    Task *task = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    
+    CGSize maximumLabelSize = CGSizeMake(310, CGFLOAT_MAX);
+    CGRect textRect = [task.taskDescription boundingRectWithSize:maximumLabelSize
+                                             options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                          attributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0]}
+                                             context:nil];
+    CGRect detailTextRect = [@"boo" boundingRectWithSize:maximumLabelSize
+                                                               options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                                            attributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:10.0]}
+                                                               context:nil];
+    
+    return textRect.size.height * 2 + 10;
+}
 
 @end
